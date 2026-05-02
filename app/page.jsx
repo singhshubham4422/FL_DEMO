@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import { Activity, BarChart3, BrainCircuit, Gauge, LineChart as LineChartIcon, ShieldCheck, Waves } from "lucide-react";
 import Controls from "../components/Controls";
 import NetworkGraph from "../components/NetworkGraph";
@@ -63,13 +64,19 @@ export default function Page() {
   const [running, setRunning] = useState(false);
 
   const simulation = useSimulation({ clients, dp, smpc, running });
+  const systemStory = useMemo(() => ([
+    "Clients training locally",
+    dp ? "Applying differential privacy" : "Baseline updates moving cleanly",
+    smpc ? "Sending encrypted updates" : "Sending model updates",
+    "Aggregating global model"
+  ]), [dp, smpc]);
 
   const currentStatus = useMemo(() => {
     if (!simulation.round) {
       return ["Ready to simulate", "Choose privacy settings", "Start the federated round"];
     }
-    return simulation.status.length ? simulation.status : ["Running federated round..."];
-  }, [simulation.round, simulation.status]);
+    return simulation.status.length ? [...simulation.status, systemStory[simulation.round % 4]] : ["Running federated round..."];
+  }, [simulation.round, simulation.status, systemStory]);
 
   const startSimulation = ({ clients: nextClients, dp: nextDp, smpc: nextSmpc }) => {
     setClients(nextClients);
@@ -86,9 +93,20 @@ export default function Page() {
 
   return (
     <div className="space-y-6 pb-10">
-      <section className="premium-panel overflow-hidden rounded-[32px] p-6 md:p-8">
+      <section className="premium-panel relative overflow-hidden rounded-[32px] p-6 md:p-8">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.16),transparent_28%),radial-gradient(circle_at_20%_80%,rgba(16,185,129,0.12),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.88),rgba(255,255,255,0.68))]" />
+        <motion.div
+          className="absolute -left-16 top-8 h-36 w-36 rounded-full bg-blue-300/30 blur-3xl"
+          animate={{ y: [0, 16, 0], x: [0, 10, 0] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute right-0 top-16 h-44 w-44 rounded-full bg-emerald-300/25 blur-3xl"
+          animate={{ y: [0, -14, 0], x: [0, -10, 0] }}
+          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+        />
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl space-y-4">
+          <div className="relative z-10 max-w-3xl space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-blue-700">
               <Waves className="h-4 w-4" /> Federated Learning Smart Grid Simulator
             </div>
@@ -100,7 +118,7 @@ export default function Page() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:w-[420px]">
+          <div className="relative z-10 grid grid-cols-2 gap-3 md:grid-cols-4 lg:w-[420px]">
             <MetricCard icon={BrainCircuit} label="Current Round" value={simulation.round || 0} accent="blue" />
             <MetricCard icon={Gauge} label="Active Clients" value={activeCount} accent="emerald" />
             <MetricCard icon={LineChartIcon} label="MSE" value={mseValue.toFixed(3)} accent="slate" />

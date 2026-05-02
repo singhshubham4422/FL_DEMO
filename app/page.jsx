@@ -90,6 +90,7 @@ export default function Page() {
   const mseValue = simulation.mse.at(-1)?.value ?? 1;
   const delayValue = simulation.delay.at(-1)?.value ?? 0;
   const epsilonValue = simulation.epsilon.at(-1)?.value ?? 0;
+  const roundMarks = Array.from({ length: 20 }, (_, index) => index + 1);
 
   return (
     <div className="space-y-6 pb-10">
@@ -116,6 +117,22 @@ export default function Page() {
             <p className="max-w-2xl text-base leading-7 text-slate-600 md:text-lg">
               Watch nodes train locally, packets move through a multi-hop network, and the aggregator converge across 20 rounds with differential privacy and secure aggregation controls.
             </p>
+            <div className="grid gap-3 pt-2 sm:grid-cols-3">
+              {[
+                { label: "Simulation", value: running ? "Live" : "Ready" },
+                { label: "Topology", value: `${clients} homes` },
+                { label: "Privacy", value: `${dp ? "DP" : "No DP"} · ${smpc ? "SMPC" : "No SMPC"}` }
+              ].map((item) => (
+                <motion.div
+                  key={item.label}
+                  whileHover={{ y: -3, scale: 1.01 }}
+                  className="rounded-2xl border border-white/60 bg-white/70 px-4 py-3 shadow-sm backdrop-blur"
+                >
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">{item.label}</div>
+                  <div className="mt-1 text-sm font-semibold text-slate-900">{item.value}</div>
+                </motion.div>
+              ))}
+            </div>
           </div>
 
           <div className="relative z-10 grid grid-cols-2 gap-3 md:grid-cols-4 lg:w-[420px]">
@@ -152,6 +169,35 @@ export default function Page() {
         </aside>
 
         <main className="space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="premium-panel rounded-[28px] px-5 py-4"
+          >
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <div className="card-title">Federated round timeline</div>
+                <div className="mt-2 text-sm text-slate-600">A live progression view across all 20 rounds.</div>
+              </div>
+              <div className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                Round {simulation.round || 0} / 20
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-10 gap-2 md:grid-cols-20">
+              {roundMarks.map((mark) => {
+                const active = mark <= (simulation.round || 0);
+                return (
+                  <motion.div
+                    key={mark}
+                    whileHover={{ scale: 1.08 }}
+                    className={`h-3 rounded-full transition-all ${active ? "bg-gradient-to-r from-blue-500 to-emerald-500 shadow-[0_0_14px_rgba(59,130,246,0.35)]" : "bg-slate-200"}`}
+                    title={`Round ${mark}`}
+                  />
+                );
+              })}
+            </div>
+          </motion.div>
+
           <div className="relative">
             <NetworkGraph
               clients={clients}
@@ -179,10 +225,10 @@ export default function Page() {
             <div className="card-title flex items-center gap-2 px-1">
               <LineChartIcon className="h-4 w-4" /> Live Metrics
             </div>
-            <Chart data={simulation.mse} color="#2563eb" height={150} />
-            <Chart data={simulation.delay} color="#10b981" height={150} />
-            <Chart data={simulation.activeClients} color="#0f766e" height={150} />
-            <Chart data={simulation.epsilon} color="#7c3aed" height={150} />
+            <motion.div whileHover={{ y: -3 }} transition={{ duration: 0.2 }}><Chart data={simulation.mse} color="#2563eb" height={150} /></motion.div>
+            <motion.div whileHover={{ y: -3 }} transition={{ duration: 0.2 }}><Chart data={simulation.delay} color="#10b981" height={150} /></motion.div>
+            <motion.div whileHover={{ y: -3 }} transition={{ duration: 0.2 }}><Chart data={simulation.activeClients} color="#0f766e" height={150} /></motion.div>
+            <motion.div whileHover={{ y: -3 }} transition={{ duration: 0.2 }}><Chart data={simulation.epsilon} color="#7c3aed" height={150} /></motion.div>
           </div>
 
           <ComputeBars data={simulation.computeLoad} />

@@ -60,14 +60,15 @@ export default function NetworkGraph({ clients = 8, active = 0, round = 0, dp = 
     return [nodes[sourceIndex], nodes[middle], server];
   }, [nodes, sourceIndex]);
   const storyStep = round % 4;
+  // fewer background particles for cleaner look
   const particles = useMemo(
     () =>
-      Array.from({ length: 12 }, (_, index) => ({
+      Array.from({ length: 6 }, (_, index) => ({
         id: index,
-        x: (index % 4) * 86 - 130,
-        y: Math.floor(index / 4) * 70 - 95,
-        delay: index * 0.35,
-        duration: 3.4 + (index % 3) * 0.6
+        x: (index % 3) * 120 - 120,
+        y: Math.floor(index / 3) * 90 - 60,
+        delay: index * 0.45,
+        duration: 4 + (index % 2) * 0.8
       })),
     []
   );
@@ -142,24 +143,45 @@ export default function NetworkGraph({ clients = 8, active = 0, round = 0, dp = 
           {particles.map((particle, index) => (
             <motion.div
               key={particle.id}
-              className="absolute z-10 h-1.5 w-1.5 rounded-full bg-blue-300/70 shadow-[0_0_14px_rgba(96,165,250,0.65)]"
+              className="absolute z-10 h-1.5 w-1.5 rounded-full bg-blue-300/60"
               animate={{
-                x: [particle.x, particle.x + (index % 2 === 0 ? 28 : -22), particle.x],
-                y: [particle.y, particle.y - 18, particle.y],
-                opacity: [0.15, 0.95, 0.15]
+                x: [particle.x, particle.x + (index % 2 === 0 ? 18 : -12), particle.x],
+                y: [particle.y, particle.y - 12, particle.y],
+                opacity: [0.18, 0.85, 0.18]
               }}
               transition={{ duration: particle.duration, repeat: Infinity, ease: "easeInOut", delay: particle.delay }}
               style={{ left: "50%", top: "50%" }}
             />
           ))}
 
-          <motion.div
-            animate={{ scale: [1, 1.08, 1], boxShadow: ["0 0 0 rgba(59,130,246,0)", "0 0 28px rgba(59,130,246,0.25)", "0 0 0 rgba(59,130,246,0)"] }}
-            transition={{ duration: 2.3, repeat: Infinity }}
-            className="absolute z-30 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 text-sm font-semibold text-white shadow-2xl"
+          {/* subtle orbit ring and central grid emblem */}
+          <motion.svg
+            viewBox="-36 -36 72 72"
+            className="absolute z-30 h-24 w-24"
+            style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
           >
-            Grid
-          </motion.div>
+            <defs>
+              <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#34d399" stopOpacity="0.6" />
+              </linearGradient>
+            </defs>
+            <motion.circle
+              cx="0"
+              cy="0"
+              r="26"
+              stroke="url(#ringGrad)"
+              strokeWidth="2.6"
+              fill="rgba(255,255,255,0.02)"
+              strokeLinecap="round"
+              animate={{ rotate: [0, 360] }}
+              transition={{ repeat: Infinity, duration: 40, ease: 'linear' }}
+            />
+            <g className="translate-center">
+              <circle cx="0" cy="0" r="14" fill="#072A4A" opacity="0.7" />
+              <text x="0" y="4" textAnchor="middle" fontSize="8" fill="#ffffff">Grid</text>
+            </g>
+          </motion.svg>
 
           {nodes.map((node, index) => {
             const isActive = index < active;
@@ -190,23 +212,20 @@ export default function NetworkGraph({ clients = 8, active = 0, round = 0, dp = 
               <motion.div
                 key={node.id}
                 animate={{
-                  y: [node.y, node.y - (isActive ? 10 : 4), node.y],
-                  scale: isSource || isActive ? [1, 1.1, 1] : [1, 1, 1],
-                  boxShadow: isSource || isActive
-                    ? ["0 0 0px rgba(34,197,94,0)", "0 0 20px rgba(34,197,94,0.55)", "0 0 0px rgba(34,197,94,0)"]
-                    : ["0 0 0px rgba(148,163,184,0)", "0 0 12px rgba(148,163,184,0.25)", "0 0 0px rgba(148,163,184,0)"]
+                  y: [node.y, node.y - (isActive ? 8 : 2), node.y],
+                  scale: isSource || isActive ? [1, 1.06, 1] : [1, 1, 1]
                 }}
                 transition={{ duration: isActive || isSource ? 2 : 3.4, repeat: Infinity, ease: "easeInOut" }}
                 className="absolute z-20 flex flex-col items-center"
                 style={{ left: `calc(50% + ${node.x}px)`, top: `calc(50% + ${node.y}px)`, transform: "translate(-50%, -50%)" }}
               >
-                <div className={`rounded-2xl border bg-white p-3 shadow-xl transition-all duration-300 hover:scale-105 ${dp ? "opacity-90" : "opacity-100"} ${smpc ? "border-dashed" : ""} ${smpc ? "blur-[0.4px]" : ""}`}>
-                  <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${stateStyles[state]} border`}>
-                    <Home className="h-5 w-5" />
+                <div className={`rounded-2xl border bg-white p-2 shadow-md transition-all duration-300 hover:scale-105 ${dp ? "opacity-92" : "opacity-100"} ${smpc ? "border-dashed" : ""} ${smpc ? "blur-[0.3px]" : ""}`}>
+                  <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${stateStyles[state]} border`}>
+                    <Home className="h-4.5 w-4.5" />
                   </div>
                 </div>
                 <span className="mt-2 text-xs font-semibold text-slate-700">Home {node.id + 1}</span>
-                <span className={`mt-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] ${stateStyles[state]}`}>{state}</span>
+                <span className={`mt-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${stateStyles[state]}`}>{state}</span>
               </motion.div>
             );
           })}

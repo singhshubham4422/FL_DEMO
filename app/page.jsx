@@ -11,23 +11,36 @@ import { useSimulation } from "../lib/useSimulation";
 
 function MetricCard({ icon: Icon, label, value, accent = "blue" }) {
   const accents = {
-    blue: "from-blue-50 to-cyan-50 text-blue-700 border-blue-100",
-    emerald: "from-emerald-50 to-teal-50 text-emerald-700 border-emerald-100",
-    slate: "from-slate-50 to-white text-slate-700 border-slate-200"
+    blue: "from-blue-50 to-blue-100/60 text-blue-800 border-blue-200/60 shadow-blue-900/5",
+    emerald: "from-emerald-50 to-emerald-100/60 text-emerald-800 border-emerald-200/60 shadow-emerald-900/5",
+    slate: "from-slate-50 to-slate-100/60 text-slate-800 border-slate-200/60 shadow-slate-900/5",
+    purple: "from-purple-50 to-purple-100/60 text-purple-800 border-purple-200/60 shadow-purple-900/5"
+  };
+
+  const iconColors = {
+    blue: "text-blue-600 bg-white/90 shadow-sm border border-blue-100",
+    emerald: "text-emerald-600 bg-white/90 shadow-sm border border-emerald-100",
+    slate: "text-slate-600 bg-white/90 shadow-sm border border-slate-200",
+    purple: "text-purple-600 bg-white/90 shadow-sm border border-purple-100"
   };
 
   return (
-    <div className={`rounded-3xl border bg-gradient-to-br ${accents[accent]} p-4 shadow-sm`}>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="metric-label">{label}</div>
-          <div className="metric-value mt-2">{value}</div>
-        </div>
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/80 shadow-sm">
+    <motion.div 
+      whileHover={{ y: -4, scale: 1.02 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      className={`relative overflow-hidden rounded-[24px] border bg-gradient-to-br ${accents[accent]} p-4 shadow-md backdrop-blur-sm min-w-0 flex flex-col justify-between`}
+    >
+      <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/40 blur-2xl pointer-events-none" />
+      <div className="relative z-10 flex items-start justify-between gap-3 mb-3">
+        <div className="metric-label flex-1 break-words leading-tight !text-inherit opacity-80">{label}</div>
+        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] ${iconColors[accent]}`}>
           <Icon className="h-5 w-5" />
         </div>
       </div>
-    </div>
+      <div className="relative z-10 mt-auto">
+        <div className="text-3xl font-bold tracking-tight text-slate-900">{value}</div>
+      </div>
+    </motion.div>
   );
 }
 
@@ -121,7 +134,7 @@ export default function Page() {
               {[
                 { label: "Simulation", value: running ? "Live" : "Ready" },
                 { label: "Topology", value: `${clients} homes` },
-                { label: "Privacy", value: `${dp ? "DP" : "No DP"} · ${smpc ? "SMPC" : "No SMPC"}` }
+                { label: "Privacy Mode", value: (!dp && !smpc) ? "Baseline" : `${dp ? "DP" : "OFF"} · ${smpc ? "SMPC" : "OFF"}` }
               ].map((item) => (
                 <motion.div
                   key={item.label}
@@ -135,16 +148,16 @@ export default function Page() {
             </div>
           </div>
 
-          <div className="relative z-10 grid grid-cols-2 gap-3 md:grid-cols-4 lg:w-[420px]">
+          <div className="relative z-10 grid grid-cols-2 gap-3 md:grid-cols-4 lg:max-w-[520px]">
             <MetricCard icon={BrainCircuit} label="Current Round" value={simulation.round || 0} accent="blue" />
             <MetricCard icon={Gauge} label="Active Clients" value={activeCount} accent="emerald" />
             <MetricCard icon={LineChartIcon} label="MSE" value={mseValue.toFixed(3)} accent="slate" />
-            <MetricCard icon={ShieldCheck} label="Epsilon" value={epsilonValue.toFixed(2)} accent="blue" />
+            <MetricCard icon={ShieldCheck} label="Epsilon" value={epsilonValue.toFixed(2)} accent="purple" />
           </div>
         </div>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[340px_1fr_380px]">
+      <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
         <aside className="space-y-6">
           <Controls
             onStart={startSimulation}
@@ -166,6 +179,8 @@ export default function Page() {
               ))}
             </div>
           </div>
+          
+          <ComputeBars data={simulation.computeLoad} />
         </aside>
 
         <main className="space-y-6">
@@ -210,29 +225,39 @@ export default function Page() {
               Training round {simulation.round || 0} of 20
             </div>
           </div>
+          
+          <div className="premium-panel rounded-[24px] p-5 text-sm text-slate-600 leading-relaxed border-l-4 border-l-blue-500">
+            <strong>AODV Routing Simulation:</strong> Communication occurs through a dynamic multi-hop AODV routing protocol, where nodes relay updates through intermediate devices instead of direct transmission.
+          </div>
 
           <div className="grid gap-6 md:grid-cols-3">
             <MetricCard icon={BarChart3} label="Network Delay" value={`${delayValue.toFixed(2)} ms`} accent="emerald" />
             <MetricCard icon={Activity} label="Active Clients" value={`${activeCount}/${clients}`} accent="blue" />
-            <MetricCard icon={ShieldCheck} label="Privacy Mode" value={`${dp ? "DP ON" : "DP OFF"} · ${smpc ? "SMPC ON" : "SMPC OFF"}`} accent="slate" />
+            <MetricCard icon={ShieldCheck} label="Privacy Mode" value={(!dp && !smpc) ? "Baseline" : `${dp ? "DP ON" : "DP OFF"} · ${smpc ? "SMPC ON" : "SMPC OFF"}`} accent="slate" />
           </div>
 
           <SystemFlow step={simulation.step} dp={dp} smpc={smpc} />
         </main>
-
-        <aside className="space-y-6">
-          <div className="space-y-4">
+      </div>
+      
+      <div className="mt-8 pt-8 border-t border-slate-200">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+          <div>
             <div className="card-title flex items-center gap-2 px-1">
-              <LineChartIcon className="h-4 w-4" /> Live Metrics
+              <LineChartIcon className="h-5 w-5" /> Live Metrics & Performance Comparison
             </div>
-            <motion.div whileHover={{ y: -3 }} transition={{ duration: 0.2 }}><Chart data={simulation.mse} color="#2563eb" height={150} /></motion.div>
-            <motion.div whileHover={{ y: -3 }} transition={{ duration: 0.2 }}><Chart data={simulation.delay} color="#10b981" height={150} /></motion.div>
-            <motion.div whileHover={{ y: -3 }} transition={{ duration: 0.2 }}><Chart data={simulation.activeClients} color="#0f766e" height={150} /></motion.div>
-            <motion.div whileHover={{ y: -3 }} transition={{ duration: 0.2 }}><Chart data={simulation.epsilon} color="#7c3aed" height={150} /></motion.div>
+            <p className="mt-2 text-sm text-slate-600 max-w-2xl px-1">
+              <strong className="text-slate-800">Baseline Explanation:</strong> Baseline represents federated learning without any privacy or security mechanisms. It serves as a reference to compare the impact of Differential Privacy (DP) and Secure Multi-Party Computation (SMPC).
+            </p>
           </div>
-
-          <ComputeBars data={simulation.computeLoad} />
-        </aside>
+        </div>
+        
+        <div className="grid gap-6 md:grid-cols-2">
+          <motion.div whileHover={{ y: -3 }} transition={{ duration: 0.2 }}><Chart data={simulation.mse} color="#2563eb" height={220} title="Comparative MSE Convergence" /></motion.div>
+          <motion.div whileHover={{ y: -3 }} transition={{ duration: 0.2 }}><Chart data={simulation.delay} color="#10b981" height={220} title="AODV Network Delay (ms)" /></motion.div>
+          <motion.div whileHover={{ y: -3 }} transition={{ duration: 0.2 }}><Chart data={simulation.activeClients} color="#0f766e" height={220} title="Active Clients per Round" /></motion.div>
+          <motion.div whileHover={{ y: -3 }} transition={{ duration: 0.2 }}><Chart data={simulation.epsilon} color="#7c3aed" height={220} title="Privacy Loss (Epsilon)" /></motion.div>
+        </div>
       </div>
     </div>
   );
